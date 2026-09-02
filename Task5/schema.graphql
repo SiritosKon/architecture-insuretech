@@ -1,0 +1,46 @@
+# GraphQL-схема сервиса управления клиентскими данными (client-info).
+# Эквивалент REST-контракта (Swagger 1.0.0): позволяет одним запросом получить
+# клиента вместе с нужными связанными объектами и выбрать только требуемые поля,
+# устраняя дублирование запросов и over-/under-fetching.
+
+"""Дата в формате ISO 8601 (YYYY-MM-DD)."""
+scalar Date
+
+"""Клиент."""
+type Client {
+  id: ID!
+  name: String!
+  age: Int
+  "Документы клиента (REST: GET /clients/{id}/documents)."
+  documents: [Document!]!
+  "Родственники клиента (REST: GET /clients/{id}/relatives)."
+  relatives: [Relative!]!
+}
+
+"""Документ клиента."""
+type Document {
+  id: ID!
+  type: String!
+  number: String!
+  issueDate: Date
+  expiryDate: Date
+}
+
+"""Родственник клиента."""
+type Relative {
+  id: ID!
+  relationType: String!
+  name: String!
+  age: Int
+}
+
+type Query {
+  "Клиент по ID (REST: GET /clients/{id}). Связанные documents/relatives запрашиваются вложенно по мере необходимости."
+  client(id: ID!): Client
+
+  "Документы клиента (REST: GET /clients/{id}/documents)."
+  documents(clientId: ID!): [Document!]!
+
+  "Родственники клиента (REST: GET /clients/{id}/relatives)."
+  relatives(clientId: ID!): [Relative!]!
+}
