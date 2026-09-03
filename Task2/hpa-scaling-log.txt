@@ -1,0 +1,40 @@
+# Task2 — HPA scaling evidence (test-app)
+#
+# Конфигурация:
+#   Deployment: replicas=1 (стартовое), resources.requests.memory=20Mi, limits.memory=30Mi
+#   HPA: metric=memory, averageUtilization=80% (порог = 80% от request 20Mi = 16Mi), minReplicas=1, maxReplicas=10
+#   Нагрузка: locust --headless -u 2000 -r 200 (реально отработано 159187 запросов, ~666 req/s)
+#
+# Наблюдение под нагрузкой (kubectl top pod / kubectl get hpa):
+#   baseline (1 реплика, без нагрузки):      memory ~1-3Mi  (~9%/80%),  replicas=1
+#   под нагрузкой память пода росла до:      25-27Mi (>16Mi порога) => HPA начал масштабирование
+#   пиковые значения per-pod:                27Mi при replicas=2; 25Mi/11Mi/1Mi при replicas=3
+#   итог:                                    replicas=3, соответствует скриншотам дашборда
+#
+# ================================================================
+# Авторитетное свидетельство — события Horizontal Pod Autoscaler
+# (kubectl describe hpa test-app -> Events):
+# ================================================================
+
+  Type     Reason                        Age                  From                       Message
+  ----     ------                        ----                 ----                       -------
+  Normal   SuccessfulRescale             19m                  horizontal-pod-autoscaler  New size: 2; reason: memory resource utilization (percentage of request) above target
+  Normal   SuccessfulRescale             18m                  horizontal-pod-autoscaler  New size: 3; reason: memory resource utilization (percentage of request) above target
+  Normal   SuccessfulRescale             5m7s (x3 over 11m)   horizontal-pod-autoscaler  New size: 3; reason:
+
+# Ключевые строки:
+#   New size: 2; reason: memory resource utilization (percentage of request) above target
+#   New size: 3; reason: memory resource utilization (percentage of request) above target
+
+# ================================================================
+# Состояние во время масштабирования (снимок под нагрузкой):
+# ================================================================
+NAME       REFERENCE             TARGETS           MINPODS  MAXPODS  REPLICAS
+test-app   Deployment/test-app   memory: 63%/80%   1        10       3
+
+NAME                        READY   STATUS    RESTARTS   AGE
+test-app-595d7f6fb7-jvr5k   1/1     Running   0          7m     (memory 25Mi)
+test-app-595d7f6fb7-f2fxd   1/1     Running   0          5m     (memory 11Mi)
+test-app-595d7f6fb7-5svtb   1/1     Running   0          4m     (memory  1Mi)
+
+# Скриншоты дашборда с этим состоянием: dashboard-scaling-1.png, dashboard-scaling-2.png

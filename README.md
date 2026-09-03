@@ -7,4 +7,3 @@ Project work of the 8th sprint — software architecture for the "InsureTech" in
 - **Task3** — Migration to Event-Driven architecture
 - **Task4** — Designing the OSAGO (car insurance) sales flow
 - **Task5** — Designing a GraphQL API
-- **Task6** — Reserved
